@@ -1,0 +1,89 @@
+extends: [['spectral:oas', all], 'spectral:asyncapi']
+functions:
+  - greeting
+  - descriptionValidation
+  - noDefaultResponse
+  - requireJsonExamples
+rules:
+  greetingRule:
+    message: "{{error}}"
+    given: "$.greeting.firstName"
+    then:
+      function: greeting
+  shortAlnumDescription:
+    description: "Descriptions must be alphanumeric and < 20 chars"
+    severity: error
+    given:
+      - $.info.description                # API-level
+      - $.paths[*][*].description         # operation-level
+    then:
+      function: descriptionValidation
+  https-only-servers:
+    description: "Servers must use HTTPS"
+    given: $.servers[*].url
+    then:
+      function: pattern
+      functionOptions:
+        match: "^https://"
+    severity: error
+  no-default-response:
+    given: $.paths[*][*].responses
+    then:
+      function: noDefaultResponse
+    severity: error
+  no-trailing-slash-paths:
+    given: $.paths
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          propertyNames:
+            not:
+              pattern: ".+/$"
+    message: "Path keys must not end with a trailing slash"
+  pagination-couple:
+    description: "If 'limit' is present, 'offset' must be present (and vice versa)"
+    given: $.paths[*][*].parameters
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: array
+          oneOf:
+            - not: { contains: { type: object, properties: { name: { const: limit } }, required: [name] } }
+            - allOf:
+                - contains: { type: object, properties: { name: { const: limit } }, required: [name] }
+                - contains: { type: object, properties: { name: { const: offset } }, required: [name] }
+  require-429:
+    description: "Operations should define a 429 response"
+    given: $.paths[*][*].responses
+    then:
+      field: "429"
+      function: defined
+    severity: warn
+  opid-camel:
+    given: $.paths[*][*].operationId
+    then:
+      function: pattern
+      functionOptions:
+        match: "^[a-z][a-zA-Z0-9]*$"
+    message: "operationId must be camelCase"
+  require-contact:
+    given: $.info.contact.email
+    then:
+      function: truthy
+    message: "info.contact.email is required"
+    severity: error
+  require-license:
+    given: $.info.license.name
+    then:
+      function: truthy
+    message: "info.license.name is required"
+    severity: error
+  json-requestbody-examples:
+    description: "Require examples on all application/json request bodies"
+    severity: error
+    given: $.paths[*][*].requestBody
+    then:
+      function: requireJsonExamples
