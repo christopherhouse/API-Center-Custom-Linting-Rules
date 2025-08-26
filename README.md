@@ -7,10 +7,10 @@ Welcome to the **Azure API Center Custom Linting Rules** repository! 🚀 This p
 ## 📋 Overview
 
 This repository showcases how to:
-- 📤 Export existing rulesets from Azure API Center
+- 📤 Export existing rulesets from Azure API Center analyzer configurations
 - ✏️ Edit and customize rules locally using VS Code
 - 🔧 Create custom JavaScript validation functions
-- 📥 Import updated rulesets back to Azure API Center
+- 📥 Import updated rulesets back to Azure API Center analyzer configurations
 - 🎨 Implement comprehensive API governance standards
 
 ## 🏁 Quick Start
@@ -18,6 +18,8 @@ This repository showcases how to:
 ### Prerequisites
 - 🔹 Azure CLI installed and configured
 - 🔹 Azure API Center instance
+- 🔹 Azure API Center CLI extension (`az extension add --name apic-extension --allow-preview`)
+- 🔹 An analyzer configuration in your API Center (or create one with `az apic api-analysis create`)
 - 🔹 VS Code or your preferred editor
 - 🔹 Node.js (for testing custom functions locally)
 
@@ -34,8 +36,8 @@ cd API-Center-Custom-Linting-Rules
 az apic api-analysis export-ruleset \
   --resource-group "your-resource-group" \
   --service-name "your-apic-instance" \
-  --ruleset-name "default" \
-  --output-folder "./exported-ruleset"
+  --config-name "your-analyzer-config" \
+  --path "./exported-ruleset"
 ```
 
 3. **Edit the ruleset locally** (see sections below for details)
@@ -45,28 +47,28 @@ az apic api-analysis export-ruleset \
 az apic api-analysis import-ruleset \
   --resource-group "your-resource-group" \
   --service-name "your-apic-instance" \
-  --ruleset-name "custom-rules" \
-  --file-path "./ruleset.yml"
+  --config-name "your-analyzer-config" \
+  --path "./exported-ruleset"
 ```
 
 ## 📤 Exporting Rulesets from Azure API Center
 
-Use the Azure CLI to export existing rulesets from your API Center instance:
+Use the Azure CLI to export existing rulesets from your API Center analyzer configurations:
 
 ```bash
-# Export the default ruleset
+# Export the default analyzer configuration
 az apic api-analysis export-ruleset \
   --resource-group "my-rg" \
   --service-name "my-apic" \
-  --ruleset-name "default" \
-  --output-folder "./my-exported-rules"
+  --config-name "default" \
+  --path "./my-exported-rules"
 
-# Export a specific custom ruleset
+# Export a specific custom analyzer configuration
 az apic api-analysis export-ruleset \
   --resource-group "my-rg" \
   --service-name "my-apic" \
-  --ruleset-name "my-custom-rules" \
-  --output-folder "./exported-custom-rules"
+  --config-name "my-custom-config" \
+  --path "./exported-custom-rules"
 ```
 
 This will create a local folder structure with:
@@ -92,26 +94,56 @@ code ./exported-ruleset
 
 4. **Test your changes** locally before importing
 
+> **Important:** When importing, use the folder path (e.g., `./exported-ruleset`) not the file path (e.g., `./exported-ruleset/ruleset.yml`).
+
 ## 📥 Importing Rulesets to Azure API Center
 
-After making your changes, import the updated ruleset:
+After making your changes, import the updated ruleset to an analyzer configuration:
 
 ```bash
-# Import using this repository's ruleset
+# Import using this repository's ruleset to an analyzer configuration
 az apic api-analysis import-ruleset \
   --resource-group "my-rg" \
   --service-name "my-apic" \
-  --ruleset-name "custom-governance-rules" \
-  --file-path "./ruleset.yml"
+  --config-name "custom-governance-rules" \
+  --path "./ruleset-folder"
 
-# Import with a specific display name and description
+# Import to a specific analyzer configuration
 az apic api-analysis import-ruleset \
   --resource-group "my-rg" \
   --service-name "my-apic" \
-  --ruleset-name "enterprise-standards" \
-  --file-path "./ruleset.yml" \
-  --ruleset-display-name "Enterprise API Standards" \
-  --ruleset-description "Comprehensive API governance rules for enterprise APIs"
+  --config-name "enterprise-standards" \
+  --path "./ruleset-folder"
+```
+
+> **Note:** The import command expects a folder path containing the ruleset files, not a direct path to the `ruleset.yml` file. The analyzer configuration must be created separately using `az apic api-analysis create` if it doesn't exist.
+
+## 🔧 Understanding Analyzer Configurations
+
+Azure API Center uses **analyzer configurations** to manage API linting rules. Each configuration contains:
+- 📋 A ruleset (YAML file with rule definitions)
+- 📁 Custom functions (JavaScript files for validation logic)
+- ⚙️ Configuration metadata (name, description, etc.)
+
+### Managing Analyzer Configurations
+
+```bash
+# List all analyzer configurations
+az apic api-analysis list \
+  --resource-group "my-rg" \
+  --service-name "my-apic"
+
+# Create a new analyzer configuration
+az apic api-analysis create \
+  --resource-group "my-rg" \
+  --service-name "my-apic" \
+  --config-name "my-custom-config"
+
+# Show details of an analyzer configuration
+az apic api-analysis show \
+  --resource-group "my-rg" \
+  --service-name "my-apic" \
+  --config-name "my-custom-config"
 ```
 
 ## 🎨 Understanding the Ruleset Structure
@@ -265,14 +297,14 @@ console.log(result); // Shows validation errors
 
 ## 🛠️ Development Workflow
 
-1. **Export** current ruleset from Azure API Center
+1. **Export** current ruleset from an Azure API Center analyzer configuration
 2. **Create branch** for your changes
 3. **Edit** rules and functions locally
 4. **Test** functions with sample data
 5. **Validate** YAML syntax
-6. **Import** to test environment
+6. **Import** to test analyzer configuration
 7. **Test** with real API definitions
-8. **Import** to production environment
+8. **Import** to production analyzer configuration
 
 ## 📖 Additional Resources
 
